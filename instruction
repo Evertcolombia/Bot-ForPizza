@@ -86,6 +86,8 @@ primero instalamos nodemon de manera global
 
 npm i -g nodemon
 
+nodemon = monitor de procesos en nodeJS, nos levantara el servidor y se quedara escuchando por cambios
+
 luego vamos a instalarlo pero de manera local en la dependencial del desarrollo 
 
 npm i --save-dev nodemon 

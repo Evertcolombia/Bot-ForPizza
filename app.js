@@ -8,6 +8,7 @@ const app = express()
 
 app.set('port', 5000)
 
+/*Asi nuestro servidor entendera que usaremos una api*/
 app.use(bodyParser.json())
 
 app.get('/', (req, res) => {
@@ -17,7 +18,9 @@ app.get('/', (req, res) => {
 /*este webhook verifica  un token*/
 app.get('/webhook', (req, res) => {
 	
+	/*Si el token que le lelga es el mismo que el 	que guardamos*/
 	if(req,query['hub.verify_token'] === 'natasha_token') {
+		/*Conexion establecida*/
 		res.send(req.query['hub.challenge']);
 	
 	} else {

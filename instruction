@@ -16,6 +16,12 @@ aqui vamos a usar tres dependecias express, body-parser, request
 
 npm i --save express body-parser request
 
+Express = framework que nos permite crear aplicaciones con nodeJS
+
+body-parser = libreria para analizar request atra vez de middleware ?
+
+Request = libreria para hacer peticiones http y https
+
 2-luego creamos un archivo llamado app.js que sera el encargado de levantar un servidor con node usando el framework de express
 
 en este archivo hacemos un require de nuestras dependencias hasta el momento

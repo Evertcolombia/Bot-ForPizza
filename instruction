@@ -1,0 +1,1114 @@
+//para este curso primero tenemos cuenta de facebook, luego creamos una pagina y luego entramos a la comunidad de desarroladores de fb y nos registramos ahi,
+
+//creamos una carpeta para e proyecto, inicializamos un repositorio 
+
+git init
+
+//luego inicializamos un proyecto con npm 
+
+npm init 
+
+aplicamos las respectivas configuraciones, cuando terminamos vemos la carpeta node_modules y el archivo package.json en nuestra carpeta del proyecto
+
+1-configuracion del entorno de trabajo
+
+aqui vamos a usar tres dependecias express, body-parser, request
+
+npm i --save express body-parser request
+
+2-luego creamos un archivo llamado app.js que sera el encargado de levantar un servidor con node usando el framework de express
+
+en este archivo hacemos un require de nuestras dependencias hasta el momento
+
+
+------------------------------------------------------
+'use strict'
+
+const express = require('express');
+const bodyParser = require('body-parser');
+const request = require ('request');
+
+//aqui  esta variable inicializa express
+
+const app = express();
+
+//establecemos un puerto para la conexion con nuestro servidor
+app.set('port', 5000);
+
+//esta linea es para que entienda nuestro servidor que va a recibir informacion de una api de facebook.
+
+app.use(bodyParser.json());
+
+//establecemos una ruta para el home
+
+app.get('/', (req, res) =>{
+  res.send('Hola Mundo!');
+})
+
+
+//aqui vamos a ñadir lo que es el weebhook con el que vamos a verificar con un token, la asignacion y la conexion que va a tener la api de facebook con nuestro codigo en nuestro servidor con express
+
+app.get('/webhook', (req, res) => {
+  
+  /*verifica que el token que asignamos en nuestro codigo sea el mismo que se manda en la verificacion de este weebhook a la hora de conectar nuestro servidor
+  con lo que viene  siendo nuestra app dentro de fb*/
+
+  if (req.query['hub.verify_token'] === 'pugpizza_token') {
+
+    //si es correcto de esta forma creamos la conexion de forma correcta
+
+    res.send(req.query['hub.challenge']);
+    } 
+    else { //si no es correcto
+      res.send('Pug pizza no tienes permisos')
+  }
+})
+
+//mensaje que nos dice si la  hubo error, o todo va correcto
+
+app.listen(app.get('port'), err => {
+
+  /*si error es igual a true, muestre el mensaje y cancele el proceso. Si  no hubo error enseñe ese otro mensaje*/
+  
+  err ? console.log('hubo un error').proccess.exit(1) :
+  console.log(`Nuestro servidor funciona en el puerto ${app.get('port')}`,);
+})
+
+2- Entorno y conexion del desarrollo local (node/ngrok) con messenger
+
+primero instalamos nodemon de manera global
+
+npm i -g nodemon
+
+luego vamos a instalarlo pero de manera local en la dependencial del desarrollo 
+
+npm i --save-dev nodemon 
+
+con esto instalado procedemos a correr el comando 
+
+nodemon app.js
+
+este nos levanta el servidor y no lo deja ejecutando para que hagamos cambios
+
+ahora vamos a instalar ngrok que nos permite publicar una url exponiendo nuestro servidor local, de esta forma podemos acceder desde la applicacion de fb
+
+creamos una cuenta en ngrok y cuando accedemos lo descargamos, este nos descarga un zip.
+esta herramienta nos facilita la adaptaicon de nuestro servidor para hacer pruebas
+
+este archivo .zip lo vamos a descomprimir, y el archivo resultante lo copiamos en la raiz del proyecto
+
+ahora vamos a ejecutarlo desde la consola pero otra ventana de la consola, no podemos matar el proceso actual de nodemon.js
+asi que desde otra ventana pero en la misma carpeta en consola
+
+ngrok http 5000
+
+esto crea un tunel que conecta nuestro entorno local  auna salida publica en internet
+
+cuando se inicializa nos muestra que tenemos una sesion con tiempo de expiracion y otras cosas mas
+vamos a necesitar ese tunel, ngrok crea dos tuneles uno http y otro https para este necesitamos el https
+
+copiamos ese enlace que nos provee
+
+https://65cbfab3.ngrok.io  'este es un ejemplo'
+
+y lo pegamos en el navegador entonces vemos que tenemos una conexion segura
+
+
+3-Recibir mensajes con Messenger 
+
+vamos a tener funcionando nuestro webhook, para esto copiamos la direccion url que nos brina ngrok y vamos a la plataforma de desarrolladores en fb a nuestra app y vamos a hacer configutacion de msn
+
+escogemos la opcion configurar webhooks esto es con la intencion de conectar nuestro servidor local con la plataforma de msn 
+
+de otra forma nuestro codigo con la app de fb
+
+esto nos abre un modal y ahi en la primera linea pegamos la direccion de nuestro ngrok 
+
+ https://5b6dc270.ngrok.io/webhook/
+ ej
+
+ en la segunda casilla ponemos el token que generamos recordemos  
+
+ pugpizza_token
+
+ y seleccionamos algunos de las  opciones en la lista de check
+
+ como, mensajes, mensajes postbacks, mensajes options,
+
+presionamos en verificar y guardar  y nos sale ya nuestor webhook habilitado
+
+en esa misma pestaña de webhook en fb developers donde dice seleccionar una pagina seleccionamos luchoPizza, cuando damos en guardar, nos va a pedir permisos
+
+asi que ahora vamos a obtener el token de acceso a la pagina
+
+esto en la seccion generacion de token
+
+en la lista deplegable seleccionamos nuestra app lucho pizza esto nos abre un modsal pidiendo permiso, los aceptamos y ahi vemos nuestro token
+
+parece un hash
+ lo dejamos ahi y volvemos a la seccion del webhook y presionamos ahora si en suscribir
+
+ se supone que en este momento podemos ya enviar y recibir mensajes desde nuestra pagina de facebook con nuestra aplicacion, con nuestro codigo
+
+
+ 3.1-vamos al codigo en app.js y creamos esa pieza de codigo que nos permite recibir mensajes entender que recibimos desde msn y poder separarlo para poder saber que tipo de mensaje envio, para entenderlo y saber que voy a responder
+
+
+ bajo la ruta
+
+ app.post('/webhook', (req, res) => {
+   //extraemos en objeto que nos esta enviando msn en un array.
+   const webhook_event = req.body.entry[0];
+
+   //validacion que detecte si tenemos un mensaje del usuario
+   if(webhook_event.messaging) {
+
+   //si hay mensajes, iteramos sobre ellos, para abstraer el mensaje recibido, o todos los mensajes que recibamos del usuario
+    webhook_event.messagin.forEach(event => {
+      console.log(event)
+    })
+   }
+   //aqui le decimos a facebook qwue recibimos el mensaje
+   res.sendStatus(200);
+ })
+
+
+ahora vamos a la plataforma de msn y le enviamos un mensaje a nuestra app lucho pizza,  y obtenemos ese mensaje por consola como un objeto
+
+
+4-Responder mensajes con messenger
+
+crearemos dos funciones, una nos permite leer el mensaje, extraer la informacion y saber que vamos a responder
+
+y la otra nos permite crear el objeto que le vamos a enviar al usuario la respuesta que va a tener.
+
+---------------------------------------
+en app.js la primer funcion bajo la configuracion del webhook
+
+//funcion para manejar mensajes, recibe nuestro evento 
+function handleMessage(event) {
+
+//extraemos dos cosas del evento, quien lo envia y el mensaje recibido
+  const senderId = event.sender.id;
+  const messageText = event.message.text;
+
+  //creamos un  objeto, lo creamos con esta informacion que ya acabamos de obtener, para enviarselo a la api que se conecta con la api de msn para enviar la respuesta al usuario. de momento con esto mel bot va a repetir lo que recibimos, con esto garantizamos que recibimos un mensaje, lo estamos procesando y reenviando el mismo mensaje al usuario, para garantizar que nuestro bot esta trabajando
+  const messageData {
+    recipient: {
+      id: senderId
+    },
+    message: {
+      text: messageText
+    }
+  }
+  //le pasamos ese objeto a esta funcion que le envia la informacion al bot, este es un llamado a la funcion
+  callSendApi(messageData);
+  
+}
+
+//la creamos aqui 
+function callSendApi(response) {
+  
+  //usamos request para enviar esa informacion hacia nuestro bot  
+  request({
+
+    //le pasamos la api a la cual nois vamos a conectar
+    "url": "https://graph.facebook.com/me/messages/",
+
+    //le enviamos el token que necesitamos para saber a que app esta conectada, este token lo de la seccion generar token en fb developers, el que ya habiamos generados unos pasos atras., lo guardamos en una variable al inicio del archivo y aqui lo usamos ej="const acces_token = 'token que copiamos'"
+    "qs": {
+      "access_token":  access_token
+    },
+
+    //por que metodo vamos a enviar la informacion
+    "method": "POST",
+    
+    //lo manejamos por medio de json, los objetos que seran ahora la respuesta
+    "json": response
+
+    },
+    //esta funcion nos permte saber si se envio el mensaje o hubo error
+    function(err) {
+      if(err) {
+      console.log('Ha ocurrido un error')
+      } else {
+      console.log('mensaje enviado');
+      }
+    }
+
+  )
+}
+
+vamos a llamar a nuestra funcion handleMEssage  esto lo hacemos  en la parte del webhook donde iteramos por cada evento 'mensaje que nos llega',  esto es lo que queremos hacer en realidad
+handleMessage(event)
+
+guardamos y vemos en la consola que nodemon se actualizo bien, sigue funcionando y vamos a enviar mensajes, y si es correcto nos responde con el mismo hola
+
+
+
+5-Añadir integración de Bienvenida
+
+Crea un mensaje de bienvenida. Dota a tu bot de la empatía que necesita para empezar una conversación con los usuarios.
+
+vamos a tener que instala curl aqui las instrucciones:
+
+-Descargar curl https://curl.haxx.se/download.html
+-Descomprimirlo y guardarlo en la carpeta donde tenemos todo el proyecto (en este caso pugpizza)
+-Copiar el código en la terminal y ejecutarlo
+-En mi caso lo ejecuté desde una nueva pestaña en GitBash
+
+
+
+
+ahora vamos a por estas configuraciones con curl que es una libreria con funciones para conectar con servidores y trabajar con ellos, entonces por medio de curl  y la api de msn vamos a generar estas opciones que le van a dar vida a nuestro bot
+
+   1-boton de empezar
+   2-mensaje de bienvenida
+
+vamos a escribir el codigo que vamos a enviar  por consola, datos por medio del servidor con curl
+
+creamos el boton de bienvenida
+
+-le decimos que usaremos curl, curl-X 
+-que el metodo de envio sera por post POST-H 
+-que tipo de contenido es"Content-Type: application/json"
+-el objeto que vamos a enviar lo ponemos con -d '{dentor de este objeto mandamos los elementos que activan esta opcion dentro del bot entonces que active la accion de iniciar "get_started": {"payload":
+  este recibe la opcion que vamos a recibir cuando se active ese boton
+  "GET_STARTED_LUCHOPIZZA"
+}
+}' lo enviamos a la api de fb msn "https://graph.facebook.com/v2.6/me/messenger_profile?acces_token=EAAf8pJBDOZCkBAFEDDZCaGnVo7ZCpZAPHIiZCK1PNDqLWlEvef0ep5KTzzhgaZBDNT0yc70NrBp52u3tpmyz8Me8000D9QAJXw9YJ48CQ3itdeUG9waC8yq2vfzfTrzeB4iH4WQIQuE0LekeCZAdwGm5kVN37edTBEbqtgibOzbtl2ZB0lpBGgt7xNZC2FmlYfy0ZD"
+
+
+este es el codigo como se envia:
+
+curl-X POST -H "Content-Type: application/json" -d '{
+  "get_started": {"payload":
+    "GET_STARTED_LUCHOPIZZA"
+  }
+}' "https://graph.facebook.com/v2.6/me/messenger_profile?access_token=EAAf8pJBDOZCkBAFEDDZCaGnVo7ZCpZAPHIiZCK1PNDqLWlEvef0ep5KTzzhgaZBDNT0yc70NrBp52u3tpmyz8Me8000D9QAJXw9YJ48CQ3itdeUG9waC8yq2vfzfTrzeB4iH4WQIQuE0LekeCZAdwGm5kVN37edTBEbqtgibOzbtl2ZB0lpBGgt7xNZC2FmlYfy0ZD"
+
+
+lo copiamos y lo pegamos en una nueva ventana de la consola
+
+
+ahora vamos a añadir el boton del saludo
+
+curl -X POST -H "Content-Type: application/json" -d '{ 
+  "greeting": [
+    {
+      "locale": "default",
+      "text": "Hola, {{user_first_name}} soy LuchoPizza y me gusta la weed"
+    },
+    {
+      "locale": "en_US",
+      "text": "hi {{user_first_name}}"
+    }
+  ]
+}' "https://graph.facebook.com/v2.6/me/messenger_profile?access_token=EAAf8pJBDOZCkBAFEDDZCaGnVo7ZCpZAPHIiZCK1PNDqLWlEvef0ep5KTzzhgaZBDNT0yc70NrBp52u3tpmyz8Me8000D9QAJXw9YJ48CQ3itdeUG9waC8yq2vfzfTrzeB4iH4WQIQuE0LekeCZAdwGm5kVN37edTBEbqtgibOzbtl2ZB0lpBGgt7xNZC2FmlYfy0ZD"  
+
+  lo copiamos y lo pegamos en la consola
+
+  nos tiene que decir result: success
+
+  ahora vamos a ver el bot en mens y para ver los cambios eliminamos la conversacion e iniciar una nueva
+
+
+
+6-Crear menú persistente
+
+Reto: Completar los Payloads en menú.
+
+Aprende a crear la configuración que te permite presentar un menú completo y replícalo para generar las opciones que quieras darle a tu bot.
+
+seguiremos trabajando en la consola para este menu
+
+curl -X POST -H "Content-Type: application/json" -d '{ 
+  "persistent_menu": [
+    {
+      "locale": "default",
+      "composer_input_disabled": false,
+      "call_to_actions": [
+        {
+          "title": "LuchoPizza",
+          "type": "nested",
+          "call_to_actions": [
+            {
+              "title": "acerca",
+              "type": "postback",
+              "payload": "ABOUT_PAYLOAD"
+            }  
+          ]
+        },
+        {
+          "title": "Menu de productos",
+          "type": "nested",
+          "call_to_actions": [
+            {
+              "title": "Pizzas",
+              "type": "postback",
+              "payload": "PIZZAS_PAYLOAD"
+            }
+          ]
+        },
+        {
+          "type":"web_url",
+          "title": "nuestra app",
+          "url": "https://platzi.com/",
+          "webview_height_ratio": "full"
+        }      
+      ]
+    }
+  ]
+}' "https://graph.facebook.com/v2.6/me/messenger_profile?access_token=EAAf8pJBDOZCkBAFEDDZCaGnVo7ZCpZAPHIiZCK1PNDqLWlEvef0ep5KTzzhgaZBDNT0yc70NrBp52u3tpmyz8Me8000D9QAJXw9YJ48CQ3itdeUG9waC8yq2vfzfTrzeB4iH4WQIQuE0LekeCZAdwGm5kVN37edTBEbqtgibOzbtl2ZB0lpBGgt7xNZC2FmlYfy0ZD" 
+
+copiamos pegamos en la terminay y vamos al bot para ver que salga el menu
+
+
+este comando es para eliminar el menu persistente
+
+
+curl - X DELETE - H "Content-Type: application/json" - d '{
+"setting_type": "call_to_actions",
+"thread_state": "existing_thread"
+}
+' "https://graph.facebook.com/v2.6/me/thread_settings?access_token=YOUR_TOKEN"
+
+
+
+7-Manejo de eventos: Messages
+
+Vamos a manejar los eventos, en otras palabras, vamos a recibir el mensaje de nuestros usuarios, analizarlo y contestarlo. En esta clase, vamos a crear los métodos necesarios para contestar un mensaje que en las próximas clases vamos a personalizar.
+
+segun lo que recibamos nos vamos a comportar, 
+
+creamos una funcion que maneje estos eventos en app.js
+
+todo esto luego de obtener conexion con el webhook y antes de la funcion con el llamado  a la api 
+
+//los parametros, son el id de quien lo envia y el evento que contiene toda la informacion
+
+funciton handleEvent(senderId, event) {
+  //un if que detecte si es un mensaje de texto
+  if(event.message) {
+
+    //si existe lo mandamos al handleMessage y que reciba los mismos  parametros senderId y event.message que es la extraccion del bloque que necesitamos
+
+    handleMEssage(senderId, event.message);
+
+  }  
+}
+
+//ahoraque ya tenemos nuestra funcionde manejo de eventos vamos ma crear esta funcion handleMessage con la informacion actualizada para el envio del mensaje personalizado y ya no simplemente repetir un mensaje
+
+function handleMessage(senderId, event) {
+  //si este evento contiene un mensaje de texto
+  if(event.text) {
+    //enviamos un mensaje por default
+      defaultMessage(senderId);
+  }
+}
+
+//declaramos esa funcion defaultMessage
+
+function defaultMessage(senderId) {
+  //aqui construimos el objeto que vamos a enviarle como respuesta
+
+  const messageData = {
+  //tiene un recipiente, este es el id de quien nos esta escribiendo y a quien le vamos a enviar el mensaje
+
+    "recipient": {
+      "id": senderId
+    },
+    //mensaje que queremos enviarle
+    "message": {
+      "text": "Hola Soy un bot de Messenger y te invito a utilizar nuestro menu"
+    }
+  }
+
+  //hacemos el llamado  a nuestra api para enviar esta informacion, de esta forma va aresponder al usuario
+
+  callSendApi(messagedata)
+}
+
+//en la linea de la funcion que obtiene el mensaje del usuario y crea un evento por cada uno ya no llamamos a handleMessage ahora le pasamos handleEvent(extraemos el senderId desde este momento event.sender.id, event)
+
+asi le mandamos al manejador de eventos toda la informacion necesaria y poder fitrar el tipo de mensaje que estemos recibiendo, repasemos   hay una funcion que obtiene un mensaje o mensajes que envia y por cada uno crea un evento en este evento lo que sucede es que se llama a handleEvent y le pasamos el senderId que trae osea el id de el usuario que envio el mensaje, y el evento, esta funcion handleEvent recibe como parametros el id del usuario el evento y cuando se ejecuta verifica si evento que se envio fue un mensaje, si fue un mensaje entnces llamamos a la funcion habdleMessage(le pasamos el id  y el mensaje que contiene el evento), esta funcionn lo que hace es que recibe como parametros el id del usuario y un evento, cuando se ejecuta verifica si el evento, mensaje es de texto si es de texto, llamamos a la funcuon defaultMessage que envia un mensaje por default como respuesta le pasamos el id para que sepa a quien se lo envia
+ en la declaracion de esta funcion defaultMEssage(senderId) tenemos un objeto que contiene los datos y el mensaje que quiere ser enviado, por ultimo llamamos a  la funcion que contiene el llamado a la api para enviar esos datos
+
+
+ahora esa funcion anterior que teniamos de handleMessage ya no la necesitamos porque tenemos una nueva, entonces la eliminamos o la comentamos
+
+
+por ultimo 
+
+curl -X POST -H "Content-Type: application/json" -d '{ 
+  "persistent_menu": [
+    {
+      "locale": "default",
+      "composer_input_disabled": false,
+      "call_to_actions": [
+        {
+cambiamos false por true esto lo hacemos 
+
+
+
+8-Manejo de eventos: Postback
+
+Los Postback son las acciones que vamos a enviar desde el menú o desde las opciones que tenemos en nuestro Bot.
+
+para esto debemos actualizar la funcion handleEvent para detectar ese tipo de evento
+
+function handleEvent(senderid, event) {
+  if(event.message) {
+    handleMessage(senderId, event.message);
+
+    //comprobamos si el evento fue un postback
+  } else if (event.postback) {
+
+    //si fue postback llamamos a la funcion handlePstback(le pasamos el id, y vamos a extraer desde este momento el payload que estamos enviando
+    )
+      handlePostback(senderId, event.postback.payload)
+  }
+}
+
+ahora creamos estsa funcion handlePostback, aqui vamos a capturar ese postback y presentarlo en la consola en este caso es el del boton empezar pues es el inicio de todo
+
+function handlePostback(senderId, payload) 
+{
+  //hacemos un switch donde recibimos el valor y compararlo con la llave que hemos asignado
+
+  switch (payload)
+  
+  case "GET_STARTED_LUCHOPIZZA"
+    console.log(payload)
+  break;
+}
+
+/entonces vamos a filtrar por los payload que estamos mandando y segun el payload que capturemos es lo que vamos a ejecutar, en este momento solo queremos ponerlo en consola
+
+guardamos corremos la consola y vamos a eliminar el hact ara iniciar de nuevo y ver el payload en la consola
+
+
+
+9-Manejo de eventos: Attachments
+
+Los Attachments son todos los tipos de archivos adjuntos que podemos enviar desde Messenger: imágenes, audios, videos, entre otros. Nuestro bot debe responder dependiendo el Attachment que envíen nuestros usuarios.
+
+Durante la clase creamos el código necesario para entender los adjuntos tipo imagen y tipo video.
+
+en la function handleMessage en app.js vamos a modificarla un poco 
+
+function handleMEssage(senderId, event) {
+  if(event.text) {
+    defaultMessage(senderId);
+  }
+  //una vez que tenemos el mensaje creamos un else if para dectectar el tipo de adjunto que trae si lo trae
+
+  else if (event.attachments) {
+    handleAttachment(senderId, event)
+  }
+}
+
+una vez que ya tenemos en nuestra funcion de hanldeMessage el filtro que va a detectar los adjuntos, vamos ahora a crear esa funcion
+
+function handleAttachment(senderId, event) {
+  //aqui extraemos el tipo del evento que estamos recibiendo
+  //para esto creamos una variable y le asignamos el tipo de attachment
+
+  let = attachment_type = event.attachments[0].type;
+
+  //con esto ya vamos a poder detectar que tipo de adjunto nos envia el usuario y poder darle una respuesta esto lo hacemos con un switch
+
+  switch (attachment_type) {
+
+    case 'imagen':
+      console.log(attachment_type)//lo mostramos en consola
+    break;
+
+    case 'video': 
+      console.log(attachment_type)
+    break;
+
+     case 'audio':
+      console.log(attachment_type);
+    break;
+
+    case 'file': 
+      console.log(attachment_type);
+    break;
+
+    case 'location':
+      receipt(senderId);
+
+    default:
+      defaultMessage(senderId);
+    break;
+  }
+}
+
+en este paso estamos recibiendo un evento y si tiene adjunto lo enviamos a nuestra funcion que se encarga de detectar el tipo de adjunto y en base a la rrespuesta que tengamos es lo que le presentamos al usuario
+
+
+ahora guardamos y vamos a enviar cada tipo de adjunto para ver que funcione y lo detecta en  consola
+
+
+
+10- Respuestas rápidas y acciones de envío:
+
+Las respuestas rápidas nos ayudan a que nuestros usuarios elijan una opción (una respuesta) sin necesidad de escribirla.
+
+en la funcion de defaultMessage. le añadiremos estas caraceristicas para que el usuario tenga las opciones que queremos elija entre ellas las opciones que queremos continuen el flujo de nuestra pizzeria
+
+function defaultMessage(senderId) {
+
+  const messageData = {
+    "recipient": {
+      "id": senderId
+    },
+    "message": {
+      "text": "Hola soy un bot marihuanero de msn y estoy muy drogado usa nuestro menu",
+
+      //añadimos estas respuestas rapidas
+      "quick_rplies": [
+        //por cada objeto que pasemos es una repsuesta rapida que va a tener el usuario para elegir
+        {
+          "content_type": "text",
+          "title": "¿Quieres una pizza?",
+          "payload": "PIZZAS_PAYLOAD"
+        },
+        {
+          "content_type": "text", 
+          "title": "Acerca de",
+          "payload": "ABOUT_PAYLOAD"
+        }
+
+      ]
+    }
+  }
+  callSendApi(messageData);
+}
+
+//luego de esto vamos a enviarle un mensaje al bot para ver estas acciones rapidas
+
+
+Las acciones de envío nos ayudan a dejar en visto, marcar como leído o mandar la acción de que estamos escribiendo. De esta forma nuestros usuarios van a sentir que están interactuando con una persona aunque en realidad sea un bot.
+
+
+vamos a crear esta funcion  la llamamos senderActions y la ponemos debajo de la funcion handlePostback
+
+function senderActions(senderId) {
+  
+  //esta funcion contiene el mensaje que queremos enviarle al usuario, esa accion de envio
+
+  const messageData = {
+    "recipient": {
+      "id": senderId
+    
+    },//pasamos la accion como  sender_action, y le pasamos a este el tipo de accion que nosotros queremos mostrar, en este caso sera el de escribiendo
+
+    "sender_action": "typing_on"
+  }
+  //por ultimo llamamos a la funcion que hace la conexion con la api de msn y le enviamos estos datos
+
+  callSendApi(messageData);
+}
+
+//ahora ya tenemos esta funcion, vamos a  hacer que se ejecute antes de que se ejecute el envio del mensaje por default en la funcion defaultMessage
+//en la ultima linea de la funcion
+
+senderActions(senderId)
+callSendApi(messageData)
+
+asi cuando entre a este default message, nos regrese la respuesta primeramente aparece el escribiendo y luego el mensaje
+
+
+//estas acciones solo tenemos tres, marcar como visto,  pioner escribiendo  o ignorar todo
+
+mark_seen: Marca el último mensaje como leído.
+typing_on: Activa los indicadores de escritura.
+typing_off: Desactiva los indicadores de escritura.
+
+
+
+/*esta es una opccion para futuro si la entendemos luego
+   OPCIONAL
+
+   function handleEvent (senderId, event) {
+
+  //si el evento es un mensaje
+  if(event.message) {
+    if(event.message.quick_reply) {
+      handlePostback(senderId, event.message.quick_reply.payload);
+    } else {
+      //llamamos handleMessage  que es la funcion que comprueba el formato del mensaje
+      handleMessage(senderId, event.message);        
+    }
+    
+  
+  }//comprobamos si ese evento.message fue un postback
+   
+   else if (event.postback) {
+    //si fue, llamamos a handlePostback, le pasamos e id y extraemos el payload
+    handlePostback(senderId, event.postback.payload)
+   }
+}
+*/
+
+
+
+11-Templates / Listado de elementos
+
+Vamos a mostrarle al usuario respuestas de verdad. Cuando nuestros usuarios quieran pedir una pizza, debemos mostrarle el listado de pizzas para puedan escoger alguna de estas.
+
+crearemos una funcion que nos permita crear ese template dentro del formato y poder hacer que el usuairo elija la pizza que el desea
+
+function showPizzas(senderId) {
+  const MessageData = {
+  
+  //aqui construimos el template
+    "recipient": {
+      "id": senderId
+    },
+    "message": {
+    
+    //no usaremos text, esta vez usaremos attachment, que nos permitira mostrar elementos dentro de msn
+      "attachment": {
+
+      //agregamos el tipo
+        "type": "template",
+
+        //agregamos un payload que vamos a mandar para que pueda construirse este template
+        "payload": {
+
+        //aqui dentro construimos la tarjeta con la pizza que el usuario puede escoger
+          "template_type": "generic",
+
+          //elementos para mostrar las pizzas
+          "elements": [
+            {
+              "title": "Peperoni con bareta",
+              "subtitle": "con sabor a marihuanitaLinda",
+              "image_url": "https://s3.amazonaws.com/chewiekie/img/productos-pizza-peperoni-champinones.jpg",
+
+              //añadimos un boton que nos permite pasar un payload para decir y detectar cual fue la pizza que se escogio
+              "buttons": [
+                {
+                  "type": "postback",
+                  "title": "Elegin Peperoni",
+                  "payload": "PEPERONI_PAYLOAD"
+                }
+              ]
+            },
+            {
+              "title": "Pollo BBQ",
+              "subtitle": "con sabor a marihuanitaLinda",
+              "image_url": "https://s3.amazonaws.com/chewiekie/img/productos-pizza-peperoni-champinones.jpg",
+
+              //añadimos un boton que nos permite pasar un payload para decir y detectar cual fue la pizza que se escogio
+              "buttons": [
+                {
+                  "type": "postback",
+                  "title": "Elegin Pollo BBQ",
+                  "payload": "BBQ_PAYLOAD"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  }
+
+  //ahora enviamos estos template con la funcion  de envio
+  callSendApi(messageData)
+}
+
+
+//para que esto pueda funcionar y podamos mostrar este template es necesario ccapturar el payload que va a desencadenar esta accion
+
+para esto vamos a ir a nuestra funcion manejador de postback  y añadimos un nuevo caso el cual detecta pizzas_payload que es el de la opcion pizzas y en el caso llamamos la funcion que acabamos de crear 
+
+showPIzzas(senderId);
+
+//por ultimo en la primera linea de esta funcion handlePostback ponemos 
+
+console.log(payload);
+
+//esto es para si por alguna razon cometimos el error de escribir mal el payload y estamos tratando de capturar uno pero no coincide, pues podemos ver en consola cual estamos enviando
+
+//grabamos y vamos a interactuar con el bot pidiendole pizzas y viendo que salga el payload en consola
+
+
+
+12-Open Graph Template / Button Template
+
+Vamos a crear un nuevo template para elegir el tamaño de la pizza, pero esta vez va a ser un template de tipo lista vertical.
+
+creamos una funcion llamada sizePizza
+
+function sizePizza (senderId) {
+  
+  const messageData = {
+    "recipient": {
+      "id": senderId
+    },
+    //dentro de message vamos a construir este template
+    "message": {
+
+      //usamos attachment para nosotros mandar este template que vamos a construir
+      "attachment": {
+
+        "type": "template",
+
+        //enviamos el payload que es donde construimos toda la info que le vamos a mandar al usuario
+        "payload": {
+
+          //este tiene un tipo de formato que es una lista
+          "template_type": "list",
+
+          //tenemos formatos como vamos a presentar esta lista,  aqui sera alargada
+          "top_element_style": "large",
+
+          //elementos que van a aparecer en esta lista
+          "elements": [
+            {
+              "title": "individual",
+
+              "image_url": "https://s3.amazonaws.com/chewiekie/img/productos-pizza-peperoni-champinones.jpg",
+
+              "subtitle": "Porcion Individual de Pizza", 
+
+              //boton que va a desencadenar esta opcion que el usuario va a elegir
+              "buttons": [
+                {
+                  "type": "postback",
+                  "title": "elegir Individual",
+                  "payload": "PERSONAL_SIZE_PAYLOAD"
+                }
+              ]
+            },
+            //agregamos otro elemento no es conveniente agregar mas de cuatro
+            {
+              "title": "Mediana",
+
+              "image_url": "https://s3.amazonaws.com/chewiekie/img/productos-pizza-peperoni-champinones.jpg",
+
+              "subtitle": "Porcion Mediana de Pizza", 
+
+              //boton que va a desencadenar esta opcion que el usuario va a elegir
+              "buttons": [
+                {
+                  "type": "postback",
+                  "title": "elegir mediana",
+                  "payload": "MEDIUM_SIZE_PAYLOAD"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  }
+
+  //enviamos el template a nuestra api
+  callSendApi(messageData);
+}
+
+ahora tenemos que ir a nurestro manejador de postback para añadir un caso  postback de nuestras dos  opciones  uno para cada una
+
+case "PEPERONY_PAYLOAD":
+  sizePizza(senderId)
+break;
+
+case "BBQ_PAYLOAD":
+  sizePizza(senderId)
+break;
+
+
+
+
+
+13-Media Template /webviews
+
+Los Media Templates nos permiten mostrar contenido extra en el flujo de nuestro bot. Cuando nuestros usuarios manden mensajes de texto podemos responder con imágenes graciosas o la opción de contactarnos por teléfono.
+
+crearemos una funcion que nos permita enviar una imagen al usuario, esto sobre la funcion de sizzePizza
+
+function messageImage(senderId) {
+  const messageData = { 
+    "recipient": {
+      "id": senderId
+    },
+    "message": {
+      "attachment": {
+        "type": "image",
+        "payload": {
+          "url": " https://media.giphy.com/media/1dOIvm5ynwYolB2Xlh/giphy.gif"
+        } 
+      }
+    }
+  }
+  //hacemos el llamado a la api pasandole esta informacion que queremos enviar
+
+  callSendApi(messageData);
+
+  //esta funcion la vamos a lamar en la funcion que envia un mensaje de texto por default (handleMessage), cuando esta suceda se enviara el mensaje de esta funcion, vamos a hacdr ese llamado desde la funcion handleMessage, y remplazamos el llamado a defaultMessage
+  //messageImage(senderId)
+
+  //guardamos y vamos a probar que funcione, le  mandamos un mensaje al bot y nos debe devolver el gif  
+}
+
+//Ahora vamos a crear un template  de contacto para que el usuario pueda tener la opcion de llamarnos
+
+function contactSupport(senderId) {
+  const messageData = {
+    "recipient": {
+      "id": senderId
+    },
+    "message": {
+      "attachment": {
+        "type": "template",
+        "payload": {
+        
+        //aqui construimos nuestor template
+          
+          "template_type": "button",
+          "text": "hola este es el canal de soporte, ¿Quieres llamarnos?",
+          
+          //este es el boton con la accion directa para llamar
+          "buttons": [
+            {
+              "type": "phone_number",
+              "title": "llamar a un asesor",
+
+              //en el payload pasamos el numero al cual hacemos la llamada
+              "payload": "+573208203890"
+            }
+          ]
+        }
+      }
+    }
+  }
+
+  //enviamos esta data a nuestra api para cuando sea llamada esta funcion 
+
+  callSendApi(messageData);
+
+  //esta funcion para ver que funcione vamos de nuevo a  la funcion handleMessage y donde teniamos el llamado a la funcion messageImage llamamos a esta nueva funcion pasandole el senderId
+  
+  constactSupport(senderId);
+
+  //guardamos y enviamos un mensaje al bot, nos debe aparecer ese template , que nos manda a la accion de llamar cuando presionemos el boton
+
+}
+
+
+Los Webviews nos permiten mostrar una página web dentro de Messenger sin necesidad de abrir un navegador, podemos mostrar elementos mucho más complejos (mapas, por ejemplo).
+aqui creamos e listado de nuestras sucursales
+
+function showLocation(senderId) {
+  const messageData = {
+    "recipient": {
+      "id": senderId
+    },
+    "message": {
+      "attachment": {
+        "type": "template",
+        "payload": {
+          
+          //aqui vamos a desencadenar la accion de ver un web view dentro de msn
+
+          "template_type": "list",
+          
+          //tipo de formato de presentacion
+
+          "top_element_style": "large",
+
+          //creamos los elementos
+
+          "elements": [
+            {
+              "title": "Sucursal Mexico",
+              "image_url": "https://s3.amazonaws.com/chewiekie/img/productos-pizza-peperoni-champinones.jpg",
+              "subtitle":"Calle bonita #546",
+
+              //creamos el boton con la particularidad del webview
+              "buttons": [
+                {
+                  "title": "ver en el mapa", 
+
+                  //aclaramos que sea tipo webview
+                  "type": "web_url",
+
+                  //le pasamos esa url, la referencia a una ubicacion en el mapa
+                  "url": "https://goo.gl/maps/GCCpWmZep1t",
+
+                  //como vamos a presentar nuestro webview, podemos abrirlo  full, medio o compacto (full, middle, tall)
+                  "webview_height_ratio": "full"
+
+
+                }
+              ]
+            },
+
+                //copiamos y pegamos un segundo elemento
+
+                {
+                  "title": "Sucursal Colombia",
+                  "image_url": "https://s3.amazonaws.com/chewiekie/img/productos-pizza-peperoni-champinones.jpg",
+                  "subtitle":"Calle maso #446",
+
+              //creamos el boton con la particularidad del webview
+              "buttons": [
+                {
+                  "title": "ver en el mapa", 
+
+                  
+                  "type": "web_url",
+
+                  
+                  "url": "https://goo.gl/maps/GCCpWmZep1t",
+
+                  "webview_height_ratio": "tall"
+                }
+              ] 
+            }
+          ]
+        }
+      }
+    }
+  }  
+
+  //mandamos esta informacion atra vez de la àpi 
+
+  callSendApi(messageData);
+
+  ahora para probar que funcione este temlate lo vamos a poner en la misma funcion habdleMessage, donde llamabamos a conctact support sahora llamamos esta funcion showLocation pasandole el senderId
+
+  //showLocations(senderID)
+
+  //grabamos y vamos al bot y le mandamos un mensaje y recibimos nuestro template con las sucursales.  con una accion en un navegador que nos lleva a googlemaps todo dentro de la conversacion en msn
+}
+
+
+
+14- Receipt Template
+
+Vamos a crear la factura con el pedido de nuestro usuario, debe tener la información de pago, la dirección de envió, los productos seleccionados, el tipo de moneda, entre otras cosas. esta sera una funcion
+
+function receipt (senderId) {
+  
+  //aqui construimos el template
+  const messageData = {
+    "recipient": {
+      "id": senderId
+    },
+    "message": {
+      "attachment": {
+        "type": "template",
+        "payload": {
+          "template_type": "receipt",
+          "recipient_name": "evert escalante",
+          "order_number": "123123",
+          "currency": "COP",
+          "payment_method": "Efectivo",
+          "order_url": "https://platzi.com/order/123",
+          "timestamp": "123123123",
+          "address": {
+            "street_1": "Villa bareta",
+            "stree_2": "---",
+            "city": "Cucuta",
+            "postal_code": "543135",
+            "state": "N-Santander",
+            "country": "Colombia"
+          }, 
+          //resumen de lo que vamos a pagar
+          "summary": {
+            "subtotal": 12.000,
+            "shipping_cost": 2.000,
+            "total_tax": 1.000,
+            "total_cost": 15.000
+          },
+          //si queremos manejar descuentos lo hacemos aqui, 
+          "adjustements": [
+            {
+              "name": "Descuento por pgl a diario", 
+              "amount": 1.00
+            }
+          ],
+          //creamos los elementos que hemos añadido a este recibo
+          "elements": [
+            {
+              "title": "Pizza Peperoni",
+              "Subtitle": "La mejor Pizza con bareta",
+              "quanty": 1,
+              "price": 10.000,
+              "currency": "COP",
+              "img_url": "https://s3.amazonaws.com/chewiekie/img/productos-pizza-peperoni-champinones.jpg"
+            },
+            {
+              "title": "Bebida ",
+              "Subtitle": "Jugo de maracuya",
+              "quanty": 1,
+              "price": 3.000,
+              "currency": "COP",
+              "img_url": "https://s3.amazonaws.com/chewiekie/img/productos-pizza-peperoni-champinones.jpg"
+            }
+          ]
+        }
+      }
+    }
+  }
+  //le enviamos la informacion al usuario
+  callSendApi(MessageData);
+}
+
+//creamos un  nuevo caso en el switch que contiene la funcion  handleAttachment este caso se llama location y lo que hace es llamar esta funcion receipt pasandole sender id
+
+//vamos a enviarle ubn mensaje al bot para que nos muestre el recibo 'recipient'
+
+
+
+15-obtener la ubicacion del usuariop
+
+vamos a crear una funcion que nos permita mostrarle un template al usuario y este tendra una accion directa para que nos envie su ubicacion y capturarla
+
+function getLocation (senderId) {
+  const messageData = {
+    "recipient": {
+      "id": senderId
+    },
+    "message": {
+      //aqui creamos un mensaje de texto donde le pedimos al usuario que nos envie la ubicacion y luego enviar la ubicacion
+
+      "text": "Ahora ¿Puedes proporcionarnos tu ubicacion?",
+      "quick_replies": [
+        {
+          "content_type": "location"
+        }    
+      ]
+    }
+  }
+  callSendApi(messageData);
+}
+
+//usamos este template dentro de la funcion handleMessage para que suceda cuando enviamos un mensaje y probarlo
+getLocation(senderId)
+
+guardamos y enviamos un mensaje al bot y vemos la magia
+
+//ya que enviamos la ubicacion al bot, es necesario ahora detectarla saber que esta llegando y extraer la longitud y latitud que hemos recibido
+
+//para esto vamos a la funcion handleAttachment que es la que decide que hacer con los attachment los archivos adjuntos en esta funcion añadimos un nuevo caso donde vamos a detectar la ubicacion que vamos a recibir
+
+case "location":
+  //IMPRIMIMOS en la consoa todo el evento para ver que estamos recibiendo y donde vamos a extraer la latitud y la logitud
+
+  //hacemos uso del metodo de json JSON:stringigy  para poder ver de forma mas presentada en la consola este evento
+  console.log(JSON.stringify(event))
+
+  //guardamos y vamos a probar nuevamente enviando la ubicacion
+
+  //tenemos que ver en la consola el elemento que enviamos impreso
+
+  //copiamos este  objeto que nos llego en consola y lo pegamos en  un nuevo archivo le ponemos fomato json, esto para ver donde se encuentra la longitud y la latitud

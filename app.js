@@ -27,8 +27,8 @@ app.post('/webhook', (req, res) => {
 	/*verificar s hay un mensaje*/
 	if (webhook_event.messaging) {
 		/*iteramos sobre ellos*/
-		webhook_event.messaging.forEach(message => {
-			console.log(message)
+		webhook_event.messaging.forEach(event => {
+			handleMessage(event)
 		})
 	}
 	/*notificamos a FB que recibimos el mensaje*/
@@ -48,6 +48,65 @@ app.get('/webhook', (req, res) => {
 		res.send('bot pizza no tiene permisos')
 	}
 })
+
+/*Esta funcion nos permite leer, el mensaje, extraer la informacion
+y saber que vamos a responder, en si manejar mensajes*/
+function handleMessage(event) {
+	/*Obtenemos el que envia, y el texto*/
+	const senderId = event.sender.id;
+	const messageText = event.message.text;
+
+	/*Creamos un objeto donde guardaremos la informacion
+	que acabamos de obtener */
+
+	const messageData  = {
+		/*Quien recibe el mensaje, de momento el mismo que 
+		lo envio*/
+		recipient: {
+			id: senderId
+	},
+		message: {
+			text: messageText
+		}
+	}
+	/*Llamamos a la funcion quele envia la informacion
+	al bot, pasandole este mensaje*/
+	callSendApi(messageData)
+
+	/*Esta funcion la llamaremos en el webhook que recibe el mensaje
+	en donde lo recibe*/ 
+}
+
+/*Funcion que le envia los mensajes al bot, la informacion*/
+function callSendApi (response) {
+
+	/*Usamos request para enviar la informacion a nuestro bot*/
+	request({
+
+		/*un atributo url y le pasamos la api a la cual nos vamos
+		a conectar*/
+		'url': 'https://graph.facebook.com/me/messages/',
+		/*le enviamos el token necesario para saber que esta app, esta conectada
+		esto en una propiedad qs que es un objeto que recibe un 'access_token con nuestro 
+		token'*/
+		'qs': {
+			'access_token': natasha_token
+		},
+		/*Metodo por el que enviamos a informacion, en un atributo method*/
+		'method': 'POST',
+		/*un atributo 'json', pasandole el response osea el mensaje qe trae la 
+		funcion, asi le indicamos que manejaremos la respuesta por json*/
+		'json': response
+	
+	},
+	/*declaramos una funcion anonima que nos permita saber si se envio el mensaje
+	o hubo un error*/
+	function (err) {
+		err ? console.log('Ha ocurrido un error al enviar el mensaje') : console.log('Mensaje enviado')
+	}
+	) 
+}
+
 
 app.listen(app.get('port'), err => {
 	if (err) {

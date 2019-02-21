@@ -86,7 +86,7 @@ primero instalamos nodemon de manera global
 
 npm i -g nodemon
 
-nodemon = monitor de procesos en nodeJS, nos levantara el servidor y se quedara escuchando por cambios
+nodemon = monitor de procesos en nodeJS, nos levantara el servidor y se quedara escuchando por
 
 luego vamos a instalarlo pero de manera local en la dependencial del desarrollo 
 
@@ -181,7 +181,7 @@ parece un hash
  })
 
 
-ahora vamos a la plataforma de msn y le enviamos un mensaje a nuestra app lucho pizza,  y obtenemos ese mensaje por consola como un objeto
+ahora vamos a la plataforma de msn y le enviamos un mensaje a nuestra app lucho pizza,  y obtenemos ese mensaje por consola como un objeto, esto gracias a bodyparser que obtiene nuestros request en objetos json
 
 
 4-Responder mensajes con messenger
@@ -200,7 +200,7 @@ function handleMessage(event) {
   const senderId = event.sender.id;
   const messageText = event.message.text;
 
-  //creamos un  objeto, lo creamos con esta informacion que ya acabamos de obtener, para enviarselo a la api que se conecta con la api de msn para enviar la respuesta al usuario. de momento con esto mel bot va a repetir lo que recibimos, con esto garantizamos que recibimos un mensaje, lo estamos procesando y reenviando el mismo mensaje al usuario, para garantizar que nuestro bot esta trabajando
+  //creamos un  objeto, lo creamos con esta informacion que ya acabamos de obtener, para enviarselo a la api que se conecta con la api de msn para enviar la respuesta al usuario. de momento con esto el bot va a repetir lo que recibimos, con esto garantizamos que recibimos un mensaje, lo estamos procesando y reenviando el mismo mensaje al usuario, para garantizar que nuestro bot esta trabajando
   const messageData {
     recipient: {
       id: senderId
